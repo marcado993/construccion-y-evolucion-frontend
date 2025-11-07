@@ -2,7 +2,7 @@
  * Servicio de API para comunicación con el backend Spring Boot
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-service-8ts6.onrender.com/api';
 
 // Tipos para las peticiones y respuestas
 export interface ConversionRequestData {
