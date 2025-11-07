@@ -10,6 +10,7 @@ interface RegisterPageProps {
 }
 
 export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: RegisterPageProps) {
+  const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,8 +57,13 @@ export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: Regis
     setError('');
 
     // Validaciones
+    if (!username.trim()) {
+      setError('Por favor ingresa un nombre de usuario');
+      return;
+    }
+
     if (!name.trim()) {
-      setError('Por favor ingresa tu nombre');
+      setError('Por favor ingresa tu nombre completo');
       return;
     }
 
@@ -80,9 +86,12 @@ export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: Regis
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          nombre: name,
-          email, 
-          password 
+          username: username.trim(),
+          email: email.trim(),
+          password: password,
+          nombre_completo: name.trim(),
+          rol: 'usuario',
+          activo: true
         }),
       });
 
@@ -279,6 +288,54 @@ export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: Regis
           )}
 
           <form onSubmit={handleSubmit} style={{ marginBottom: '24px' }}>
+            {/* Username */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '6px',
+                color: theme.text,
+                fontSize: '13px',
+                fontWeight: 600,
+              }}>
+                Nombre de Usuario
+              </label>
+              <div style={{ position: 'relative' }}>
+                <User size={18} style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: theme.textSecondary,
+                }} />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="usuario123"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 44px',
+                    background: theme.input,
+                    border: `2px solid ${theme.border}`,
+                    borderRadius: '10px',
+                    fontSize: '15px',
+                    color: theme.text,
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = theme.primary;
+                    e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.primary}20`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = theme.border;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+            </div>
+
             {/* Nombre */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{
@@ -302,7 +359,7 @@ export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: Regis
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Tu nombre"
+                  placeholder="Tu nombre completo"
                   required
                   style={{
                     width: '100%',
