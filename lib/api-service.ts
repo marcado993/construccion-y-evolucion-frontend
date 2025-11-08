@@ -104,11 +104,12 @@ class ApiService {
    */
   private loadUserFromStorage() {
     if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user');
+      // La aplicación guarda el usuario en 'braille_user' desde AuthContext
+      const userStr = localStorage.getItem('braille_user') || localStorage.getItem('user');
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
-          if (user.id) {
+          if (user && user.id) {
             this.userId = user.id;
           }
         } catch (error) {
@@ -215,8 +216,18 @@ class ApiService {
       throw new Error(`Error al eliminar conversión: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return data.success || false;
+    // Backend devuelve 204 No Content en caso de éxito; manejar sin intentar parsear JSON
+    if (response.status === 204) {
+      return true;
+    }
+
+    try {
+      const data = await response.json();
+      return data?.success ?? true;
+    } catch (err) {
+      // Si no hay body JSON, asumimos que fue exitoso
+      return true;
+    }
   }
 
   /**

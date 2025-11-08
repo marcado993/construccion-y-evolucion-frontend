@@ -74,7 +74,8 @@ export function useHistorial(tipo?: 'texto-a-braille' | 'braille-a-texto') {
 
   const cargarHistorial = useCallback(async (limite: number = 50) => {
     // Verificar que el usuario esté autenticado
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    // AuthContext guarda el usuario en 'braille_user'
+    const userStr = typeof window !== 'undefined' ? (localStorage.getItem('braille_user') || localStorage.getItem('user')) : null;
     if (!userStr) {
       setHistorial([]);
       return;

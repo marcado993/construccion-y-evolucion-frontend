@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { textToBraille, canConvertToBraille } from '@/lib/braille-converter';
 import { addConversionToHistory } from './ConversionHistory';
 import ConversionHistory from './ConversionHistory';
-import { Hand, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Sun, Moon } from 'lucide-react';
+import { Hand, Copy, RotateCcw, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { useConversion, useBackendStatus } from '@/lib/hooks/useApi';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function TextToBraille() {
   const [inputText, setInputText] = useState('');
@@ -13,11 +14,14 @@ export default function TextToBraille() {
   const [error, setError] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   
   // Hooks para backend
   const { convertir, loading: apiLoading } = useConversion();
   const { isConnected } = useBackendStatus();
+  
+  // Hook para el tema global
+  const { theme: themeMode } = useTheme();
+  const isDark = themeMode === 'dark';
 
   const colors = {
     dark: {
@@ -114,66 +118,36 @@ export default function TextToBraille() {
       
       <div style={{ display: 'grid', gridTemplateColumns: showHistory ? '1fr 400px' : '1fr', gap: '24px' }}>
         <div style={{ minWidth: 0 }}>
-          {/* Header con botón de tema */}
+          {/* Header */}
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #4F46E5, #06B6D4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Hand size={24} color="#FFFFFF" />
-              </div>
-              <div>
-                <h2 style={{
-                  fontSize: '28px',
-                  fontWeight: 800,
-                  color: theme.text,
-                  margin: 0,
-                  background: 'linear-gradient(135deg, #4F46E5, #06B6D4)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}>
-                  Texto a Braille
-                </h2>
-                <p style={{ fontSize: '14px', color: theme.textSecondary, margin: 0 }}>
-                  Convierte texto en español al sistema Braille táctil
-                </p>
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Hand size={24} color="#FFFFFF" />
             </div>
-            
-            {/* Botón de cambio de tema */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: theme.card,
-                border: `2px solid ${theme.border}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = theme.primary;
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = theme.border;
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-              aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            >
-              {isDark ? <Sun size={20} color={theme.text} /> : <Moon size={20} color={theme.text} />}
-            </button>
+            <div>
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: 800,
+                color: theme.text,
+                margin: 0,
+                background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}>
+                Texto a Braille
+              </h2>
+              <p style={{ fontSize: '14px', color: theme.textSecondary, margin: 0 }}>
+                Convierte texto en español al sistema Braille táctil
+              </p>
+            </div>
           </div>
         </div>
 
@@ -248,7 +222,7 @@ export default function TextToBraille() {
                 flex: 1,
                 minWidth: '200px',
                 padding: '14px',
-                background: inputText.trim() && !isConverting ? 'linear-gradient(135deg, #4F46E5, #06B6D4)' : theme.border,
+                background: inputText.trim() && !isConverting ? `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` : theme.border,
                 border: 'none',
                 borderRadius: '10px',
                 color: '#FFFFFF',
@@ -339,8 +313,8 @@ export default function TextToBraille() {
           {/* Error */}
           {error && (
             <div style={{
-              background: '#FEE2E2',
-              border: '2px solid #DC2626',
+              background: isDark ? '#DC262620' : '#FEE2E2',
+              border: `2px solid #DC2626`,
               borderRadius: '12px',
               padding: '14px',
               color: '#DC2626',
@@ -354,11 +328,11 @@ export default function TextToBraille() {
           {/* Output Braille */}
           {brailleOutput && (
             <div style={{
-              background: 'linear-gradient(135deg, #0A0E27 0%, #151937 100%)',
-              border: '2px solid #4F46E5',
+              background: isDark ? `linear-gradient(135deg, ${theme.bg} 0%, ${theme.card} 100%)` : theme.card,
+              border: `2px solid ${theme.primary}`,
               borderRadius: '16px',
               padding: '24px',
-              boxShadow: '0 8px 24px rgba(79, 70, 229, 0.2)',
+              boxShadow: `0 8px 24px ${theme.primary}40`,
             }}>
               <div style={{
                 display: 'flex',
@@ -369,7 +343,7 @@ export default function TextToBraille() {
                 <h3 style={{
                   fontSize: '16px',
                   fontWeight: 700,
-                  color: '#FFFFFF',
+                  color: theme.text,
                   margin: 0,
                 }}>
                   🎯 Resultado en Braille
@@ -378,7 +352,7 @@ export default function TextToBraille() {
                   onClick={handleCopy}
                   style={{
                     padding: '8px 14px',
-                    background: '#4F46E5',
+                    background: theme.primary,
                     border: 'none',
                     borderRadius: '8px',
                     color: '#FFFFFF',
@@ -391,10 +365,10 @@ export default function TextToBraille() {
                     transition: 'all 0.2s',
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.background = '#06B6D4';
+                    e.currentTarget.style.background = theme.secondary;
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.background = '#4F46E5';
+                    e.currentTarget.style.background = theme.primary;
                   }}
                 >
                   <Copy size={14} />
@@ -408,7 +382,7 @@ export default function TextToBraille() {
                   wordBreak: 'break-all',
                   userSelect: 'all',
                   fontFamily: 'monospace',
-                  color: '#06B6D4',
+                  color: theme.secondary,
                   letterSpacing: '4px',
                 }}
                 aria-label="Resultado en Braille"
@@ -418,12 +392,12 @@ export default function TextToBraille() {
               <div style={{
                 marginTop: '16px',
                 padding: '12px',
-                background: '#0A0E27',
+                background: isDark ? theme.bg : theme.input,
                 borderRadius: '8px',
                 fontSize: '13px',
-                color: '#8B92B8',
+                color: theme.textSecondary,
               }}>
-                💡 <strong style={{ color: '#FFFFFF' }}>Tip:</strong> Este texto puede ser impreso en relieve para lectura táctil
+                💡 <strong style={{ color: theme.text }}>Tip:</strong> Este texto puede ser impreso en relieve para lectura táctil
               </div>
             </div>
           )}

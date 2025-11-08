@@ -49,7 +49,7 @@ export default function Home() {
 
   // App principal (protegida)
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Sidebar 
         activeSection={activeSection} 
         onSectionChange={setActiveSection} 
@@ -64,7 +64,7 @@ export default function Home() {
           sidebarCollapsed={sidebarCollapsed} 
         />
         
-        <main className="pt-16 min-h-screen">
+        <main className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}

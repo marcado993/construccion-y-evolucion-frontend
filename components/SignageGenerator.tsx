@@ -4,15 +4,19 @@ import { useState, useRef } from 'react';
 import { textToBraille, canConvertToBraille } from '@/lib/braille-converter';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { FileText, Image as ImageIcon, RotateCcw, Sparkles, FileDown, Sun, Moon } from 'lucide-react';
+import { FileText, Image as ImageIcon, RotateCcw, Sparkles, FileDown } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function SignageGenerator() {
   const [signText, setSignText] = useState('');
   const [brailleText, setBrailleText] = useState('');
   const [error, setError] = useState('');
   const [highContrast, setHighContrast] = useState(true);
-  const [isDark, setIsDark] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  // Hook para el tema global
+  const { theme: themeMode } = useTheme();
+  const isDark = themeMode === 'dark';
 
   const colors = {
     dark: {
@@ -22,8 +26,8 @@ export default function SignageGenerator() {
       text: '#FFFFFF',
       textSecondary: '#8B92B8',
       border: '#252B4F',
-      primary: '#4F46E5',
-      secondary: '#06B6D4',
+      primary: '#10B981',
+      secondary: '#059669',
     },
     light: {
       bg: '#F8F9FF',
@@ -32,8 +36,8 @@ export default function SignageGenerator() {
       text: '#1E293B',
       textSecondary: '#64748B',
       border: '#E2E8F0',
-      primary: '#4F46E5',
-      secondary: '#06B6D4',
+      primary: '#10B981',
+      secondary: '#059669',
     }
   };
 
@@ -106,66 +110,36 @@ export default function SignageGenerator() {
 
   return (
     <div>
-      {/* Header con botón de tema */}
+      {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #10B981, #059669)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <FileDown size={24} color="#FFFFFF" />
-            </div>
-            <div>
-              <h2 style={{
-                fontSize: '28px',
-                fontWeight: 800,
-                color: theme.text,
-                margin: 0,
-                background: 'linear-gradient(135deg, #10B981, #059669)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}>
-                Generar Señalética
-              </h2>
-              <p style={{ fontSize: '14px', color: theme.textSecondary, margin: 0 }}>
-                Crea diseños Braille profesionales para imprimir
-              </p>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <FileDown size={24} color="#FFFFFF" />
           </div>
-          
-          {/* Botón de cambio de tema */}
-          <button
-            onClick={() => setIsDark(!isDark)}
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              background: theme.card,
-              border: `2px solid ${theme.border}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = theme.primary;
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = theme.border;
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-          >
-            {isDark ? <Sun size={20} color={theme.text} /> : <Moon size={20} color={theme.text} />}
-          </button>
+          <div>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: 800,
+              color: theme.text,
+              margin: 0,
+              background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Generar Señalética
+            </h2>
+            <p style={{ fontSize: '14px', color: theme.textSecondary, margin: 0 }}>
+              Crea diseños Braille profesionales para imprimir
+            </p>
+          </div>
         </div>
       </div>
 
@@ -177,7 +151,7 @@ export default function SignageGenerator() {
             marginBottom: '8px',
             fontSize: '13px',
             fontWeight: 600,
-            color: '#1E293B',
+            color: theme.text,
           }}>
             Texto de la señalética
           </label>
@@ -190,20 +164,20 @@ export default function SignageGenerator() {
             style={{
               width: '100%',
               padding: '14px',
-              background: '#F8F9FF',
-              border: '2px solid #E2E8F0',
+              background: theme.input,
+              border: `2px solid ${theme.border}`,
               borderRadius: '12px',
               fontSize: '15px',
-              color: '#1E293B',
+              color: theme.text,
               outline: 'none',
               transition: 'all 0.2s',
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#10B981';
-              e.currentTarget.style.boxShadow = '0 0 0 3px #10B98120';
+              e.currentTarget.style.borderColor = theme.primary;
+              e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.primary}20`;
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#E2E8F0';
+              e.currentTarget.style.borderColor = theme.border;
               e.currentTarget.style.boxShadow = 'none';
             }}
             aria-label="Texto para la señalética"
@@ -216,9 +190,9 @@ export default function SignageGenerator() {
           alignItems: 'center', 
           gap: '12px',
           padding: '14px',
-          background: '#F8F9FF',
+          background: theme.input,
           borderRadius: '12px',
-          border: '2px solid #E2E8F0',
+          border: `2px solid ${theme.border}`,
         }}>
           <label style={{ 
             display: 'flex', 
@@ -227,7 +201,7 @@ export default function SignageGenerator() {
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: 600,
-            color: '#1E293B',
+            color: theme.text,
           }}>
             <input
               type="checkbox"
@@ -237,7 +211,7 @@ export default function SignageGenerator() {
                 width: '20px',
                 height: '20px',
                 cursor: 'pointer',
-                accentColor: '#10B981',
+                accentColor: theme.primary,
               }}
             />
             <span>Alto contraste (fondo negro)</span>
@@ -245,8 +219,8 @@ export default function SignageGenerator() {
           <div style={{
             marginLeft: 'auto',
             fontSize: '12px',
-            color: '#64748B',
-            background: '#FFFFFF',
+            color: theme.textSecondary,
+            background: theme.card,
             padding: '6px 12px',
             borderRadius: '6px',
           }}>
@@ -262,7 +236,7 @@ export default function SignageGenerator() {
             style={{
               flex: 1,
               padding: '14px',
-              background: signText.trim() ? 'linear-gradient(135deg, #10B981, #059669)' : '#E2E8F0',
+              background: signText.trim() ? `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` : theme.border,
               border: 'none',
               borderRadius: '10px',
               color: '#FFFFFF',
@@ -278,7 +252,7 @@ export default function SignageGenerator() {
             onMouseOver={(e) => {
               if (signText.trim()) {
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 16px #10B98140';
+                e.currentTarget.style.boxShadow = `0 8px 16px ${theme.primary}40`;
               }
             }}
             onMouseOut={(e) => {
@@ -294,21 +268,21 @@ export default function SignageGenerator() {
             style={{
               padding: '14px 20px',
               background: 'transparent',
-              border: '2px solid #E2E8F0',
+              border: `2px solid ${theme.border}`,
               borderRadius: '10px',
-              color: '#64748B',
+              color: theme.textSecondary,
               fontSize: '15px',
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.2s',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = '#10B981';
-              e.currentTarget.style.color = '#10B981';
+              e.currentTarget.style.borderColor = theme.primary;
+              e.currentTarget.style.color = theme.primary;
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = '#E2E8F0';
-              e.currentTarget.style.color = '#64748B';
+              e.currentTarget.style.borderColor = theme.border;
+              e.currentTarget.style.color = theme.textSecondary;
             }}
           >
             <RotateCcw size={18} />
@@ -318,7 +292,7 @@ export default function SignageGenerator() {
         {/* Error */}
         {error && (
           <div style={{
-            background: '#FEE2E2',
+            background: isDark ? '#DC262620' : '#FEE2E2',
             border: '2px solid #DC2626',
             borderRadius: '12px',
             padding: '14px',
@@ -336,7 +310,7 @@ export default function SignageGenerator() {
             <h3 style={{
               fontSize: '18px',
               fontWeight: 700,
-              color: '#1E293B',
+              color: theme.text,
               margin: 0,
             }}>
               Vista Previa de Señalética
@@ -350,7 +324,7 @@ export default function SignageGenerator() {
                 padding: '60px',
                 textAlign: 'center',
                 background: highContrast ? '#000000' : '#FFFFFF',
-                border: highContrast ? '4px solid #10B981' : '4px solid #000000',
+                border: `4px solid ${highContrast ? theme.primary : '#000000'}`,
                 minHeight: '350px',
                 display: 'flex',
                 alignItems: 'center',
@@ -376,7 +350,7 @@ export default function SignageGenerator() {
                     lineHeight: '1.6',
                     fontFamily: 'monospace',
                     letterSpacing: '12px',
-                    color: highContrast ? '#10B981' : '#059669',
+                    color: highContrast ? theme.primary : theme.secondary,
                   }}
                 >
                   {brailleText}
@@ -406,7 +380,7 @@ export default function SignageGenerator() {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px #4F46E540';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(79, 70, 229, 0.4)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
@@ -436,7 +410,7 @@ export default function SignageGenerator() {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px #8B5CF640';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(139, 92, 246, 0.4)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
@@ -450,13 +424,13 @@ export default function SignageGenerator() {
 
             <div style={{
               padding: '16px',
-              background: 'linear-gradient(135deg, #0A0E27 0%, #151937 100%)',
+              background: isDark ? `linear-gradient(135deg, ${theme.bg} 0%, ${theme.card} 100%)` : theme.card,
               borderRadius: '12px',
-              border: '2px solid #10B981',
+              border: `2px solid ${theme.primary}`,
               fontSize: '14px',
-              color: '#8B92B8',
+              color: theme.textSecondary,
             }}>
-              💡 <strong style={{ color: '#FFFFFF' }}>Tip Profesional:</strong> Imprime en papel adhesivo transparente o en vinilo para crear señalética duradera y profesional
+              💡 <strong style={{ color: theme.text }}>Tip Profesional:</strong> Imprime en papel adhesivo transparente o en vinilo para crear señalética duradera y profesional
             </div>
           </div>
         )}

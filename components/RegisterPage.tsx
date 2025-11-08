@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sun, Moon, User, ArrowLeft, Hand, Accessibility, Braces } from 'lucide-react';
 
@@ -18,8 +19,9 @@ export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: Regis
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDark, setIsDark] = useState(true);
   const [error, setError] = useState('');
+  const { theme: themeMode, toggleTheme } = useTheme();
+  const isDark = themeMode === 'dark';
 
   const colors = {
     dark: {
@@ -136,7 +138,7 @@ export default function RegisterPage({ onBackToLogin, onRegisterSuccess }: Regis
 
       {/* Botón de cambio de tema */}
       <button
-        onClick={() => setIsDark(!isDark)}
+        onClick={toggleTheme}
         style={{
           position: 'absolute',
           top: '20px',

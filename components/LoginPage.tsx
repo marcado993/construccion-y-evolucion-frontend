@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sun, Moon, Hand, Accessibility, Braces } from 'lucide-react';
 import RegisterPage from './RegisterPage';
@@ -13,11 +14,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDark, setIsDark] = useState(true);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('login');
   const [successMessage, setSuccessMessage] = useState('');
   const { login } = useAuth();
+  const { theme: themeMode, toggleTheme } = useTheme();
+  const isDark = themeMode === 'dark';
 
   const colors = {
     dark: {
@@ -122,7 +124,7 @@ export default function LoginPage() {
       }} />
 
       <button
-        onClick={() => setIsDark(!isDark)}
+        onClick={toggleTheme}
         style={{
           position: 'absolute',
           top: '20px',

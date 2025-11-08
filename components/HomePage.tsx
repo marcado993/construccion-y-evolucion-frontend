@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Shield, Rocket } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 interface HomePageProps {
   onGetStarted: () => void;
@@ -31,6 +32,8 @@ const features = [
 ];
 
 export default function HomePage({ onGetStarted }: HomePageProps) {
+  const { theme } = useTheme();
+  
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -47,7 +50,7 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium mb-6 transition-colors duration-300"
             >
               <Sparkles className="w-4 h-4" />
               Sistema de conversión Braille profesional
@@ -69,7 +72,7 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto"
+              className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto transition-colors duration-300"
             >
               La herramienta más moderna para convertir texto a Braille y generar
               señalización accesible de forma profesional.
@@ -94,7 +97,7 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-700 font-semibold text-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="px-8 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-semibold text-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
               >
                 Ver Demo
               </motion.button>
@@ -117,13 +120,15 @@ export default function HomePage({ onGetStarted }: HomePageProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.7 + index * 0.1 }}
                   whileHover={{ y: -5 }}
-                  className="p-6 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl transition-all"
+                  className="p-6 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl transition-all duration-300"
                 >
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center mb-4">
                     <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  <h3 className="font-semibold text-lg mb-2 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm transition-colors duration-300">
                     {feature.description}
                   </p>
                 </motion.div>
