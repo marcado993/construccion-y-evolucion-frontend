@@ -56,6 +56,28 @@ export default function SignageGenerator() {
     setBrailleText(result);
   };
 
+  // Calcular tamaños de fuente dinámicos basados en la longitud del texto
+  const getTextFontSize = () => {
+    const length = signText.length;
+    if (length > 30) return '32px';
+    if (length > 20) return '42px';
+    return '52px';
+  };
+
+  const getBrailleFontSize = () => {
+    const length = brailleText.length;
+    if (length > 30) return '48px';
+    if (length > 20) return '58px';
+    return '72px';
+  };
+
+  const getBrailleLetterSpacing = () => {
+    const length = brailleText.length;
+    if (length > 30) return '6px';
+    if (length > 20) return '8px';
+    return '12px';
+  };
+
   const downloadAsPDF = async () => {
     if (!previewRef.current || !brailleText) return;
 
@@ -161,11 +183,12 @@ export default function SignageGenerator() {
             value={signText}
             onChange={(e) => setSignText(e.target.value)}
             placeholder="Ej: Baño, Salida, Recepción..."
+            maxLength={50}
             style={{
               width: '100%',
               padding: '14px',
               background: theme.input,
-              border: `2px solid ${theme.border}`,
+              border: `2px solid ${signText.length > 30 ? '#F59E0B' : theme.border}`,
               borderRadius: '12px',
               fontSize: '15px',
               color: theme.text,
@@ -177,11 +200,36 @@ export default function SignageGenerator() {
               e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.primary}20`;
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = theme.border;
+              e.currentTarget.style.borderColor = signText.length > 30 ? '#F59E0B' : theme.border;
               e.currentTarget.style.boxShadow = 'none';
             }}
             aria-label="Texto para la señalética"
           />
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginTop: '6px',
+          }}>
+            <p style={{ 
+              fontSize: '13px', 
+              color: signText.length > 30 ? '#F59E0B' : theme.textSecondary,
+              margin: 0,
+              fontWeight: signText.length > 30 ? 600 : 400,
+            }}>
+              {signText.length > 30 && '⚠️ '}{signText.length}/50 caracteres
+            </p>
+            {signText.length > 30 && (
+              <p style={{ 
+                fontSize: '12px', 
+                color: '#F59E0B',
+                margin: 0,
+                fontWeight: 600,
+              }}>
+                Textos cortos son más legibles
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Opciones de diseño */}
@@ -321,7 +369,7 @@ export default function SignageGenerator() {
               ref={previewRef}
               style={{
                 borderRadius: '16px',
-                padding: '60px',
+                padding: '40px',
                 textAlign: 'center',
                 background: highContrast ? '#000000' : '#FFFFFF',
                 border: `4px solid ${highContrast ? theme.primary : '#000000'}`,
@@ -329,16 +377,29 @@ export default function SignageGenerator() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                maxWidth: '100%',
+                overflow: 'hidden',
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '24px',
+                maxWidth: '100%',
+                width: '100%',
+              }}>
                 {/* Texto normal */}
                 <div style={{
-                  fontSize: '52px',
+                  fontSize: getTextFontSize(),
                   fontWeight: 800,
                   textTransform: 'uppercase',
-                  letterSpacing: '4px',
+                  letterSpacing: '3px',
                   color: highContrast ? '#FFFFFF' : '#000000',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  hyphens: 'auto',
+                  lineHeight: '1.3',
+                  maxWidth: '100%',
                 }}>
                   {signText}
                 </div>
@@ -346,11 +407,14 @@ export default function SignageGenerator() {
                 {/* Texto Braille */}
                 <div
                   style={{
-                    fontSize: '72px',
-                    lineHeight: '1.6',
+                    fontSize: getBrailleFontSize(),
+                    lineHeight: '1.5',
                     fontFamily: 'monospace',
-                    letterSpacing: '12px',
+                    letterSpacing: getBrailleLetterSpacing(),
                     color: highContrast ? theme.primary : theme.secondary,
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    maxWidth: '100%',
                   }}
                 >
                   {brailleText}
