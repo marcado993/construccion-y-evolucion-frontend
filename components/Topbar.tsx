@@ -73,12 +73,10 @@ export default function Topbar({ title, sidebarCollapsed }: TopbarProps) {
       className={cn(
         'fixed top-0 right-0 h-16 bg-white/80 dark:bg-gray-900/80',
         'backdrop-blur-lg border-b border-gray-200 dark:border-gray-800',
-        'flex items-center justify-between px-6 z-30 shadow-sm',
-        'transition-all duration-300'
+        'flex items-center justify-between px-4 md:px-6 z-30 shadow-sm',
+        'transition-all duration-300',
+        'left-0 md:left-[280px]' // En móvil ocupa todo el ancho, en desktop deja espacio para el sidebar
       )}
-      style={{
-        left: sidebarCollapsed ? 80 : 280
-      }}
     >
       {/* Title */}
       <motion.div
@@ -87,7 +85,7 @@ export default function Topbar({ title, sidebarCollapsed }: TopbarProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           {title}
         </h1>
       </motion.div>
@@ -133,7 +131,7 @@ export default function Topbar({ title, sidebarCollapsed }: TopbarProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.95 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="absolute right-0 top-14 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+                  className="absolute right-0 top-14 w-screen max-w-sm md:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
                 >
                   {/* Header */}
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">

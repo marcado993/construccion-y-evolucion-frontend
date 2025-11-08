@@ -116,7 +116,7 @@ export default function TextToBraille() {
         }
       `}</style>
       
-      <div style={{ display: 'grid', gridTemplateColumns: showHistory ? '1fr 400px' : '1fr', gap: '24px' }}>
+      <div className="grid gap-6" style={{ gridTemplateColumns: showHistory ? 'repeat(auto-fit, minmax(300px, 1fr))' : '1fr' }}>
         <div style={{ minWidth: 0 }}>
           {/* Header */}
         <div style={{ marginBottom: '24px' }}>

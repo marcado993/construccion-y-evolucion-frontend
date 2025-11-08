@@ -56,15 +56,14 @@ export default function Home() {
       />
       
       <div 
-        className="transition-all duration-300"
-        style={{ marginLeft: sidebarCollapsed ? 80 : 280 }}
+        className="transition-all duration-300 md:ml-[280px]"
       >
         <Topbar 
           title={sectionTitles[activeSection]} 
           sidebarCollapsed={sidebarCollapsed} 
         />
         
-        <main className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+        <main className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300 px-4 md:px-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}

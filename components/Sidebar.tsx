@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, 
   FileText, 
@@ -30,22 +30,60 @@ const menuItems = [
 
 export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { logout } = useAuth();
 
   return (
-    <motion.aside
-      initial={{ x: -280 }}
-      animate={{ 
-        x: 0,
-        width: isCollapsed ? 80 : 280 
-      }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className={cn(
-        'fixed left-0 top-0 h-screen bg-white dark:bg-gray-900',
-        'border-r border-gray-200 dark:border-gray-800',
-        'flex flex-col z-40 shadow-xl'
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className={cn(
+          'md:hidden fixed top-4 left-4 z-50 p-3 rounded-xl',
+          'bg-white dark:bg-gray-900 shadow-lg',
+          'border-2 border-gray-200 dark:border-gray-800'
+        )}
+      >
+        <motion.div
+          animate={{ rotate: isMobileOpen ? 90 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {isMobileOpen ? (
+            <ChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          ) : (
+            <ChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          )}
+        </motion.div>
+      </button>
+
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+        />
       )}
-    >
+
+      {/* Sidebar */}
+      <motion.aside
+        initial={{ x: -280 }}
+        animate={{ 
+          x: 0,
+          width: isCollapsed ? 80 : 280 
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className={cn(
+          'fixed left-0 top-0 h-screen bg-white dark:bg-gray-900',
+          'border-r border-gray-200 dark:border-gray-800',
+          'flex flex-col z-40 shadow-xl',
+          // En móvil, ocultar por defecto y mostrar solo cuando isMobileOpen es true
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full',
+          'md:translate-x-0' // En desktop, siempre visible
+        )}
+      >
       {/* Logo/Header */}
       <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800">
         {!isCollapsed && (
@@ -89,7 +127,10 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           return (
             <motion.button
               key={item.id}
-              onClick={() => onSectionChange(item.id)}
+              onClick={() => {
+                onSectionChange(item.id);
+                setIsMobileOpen(false); // Cerrar sidebar en móvil después de seleccionar
+              }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={cn(
@@ -152,6 +193,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
         </motion.button>
       </div>
     </motion.aside>
+    </>
   );
 }
 
