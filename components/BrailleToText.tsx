@@ -139,29 +139,56 @@ export default function BrailleToText() {
       if (!ctx) throw new Error('No se pudo crear el contexto del canvas');
 
       // Configuración del canvas
-      const padding = 40;
-      const fontSize = 32;
-      const lineHeight = fontSize * 1.5;
+      const padding = 60;
+      const fontSize = 36;
+      const lineHeight = fontSize * 1.6;
+      const titleSize = 24;
       
-      // Calcular dimensiones basadas en el texto
-      ctx.font = `${fontSize}px Arial, sans-serif`;
-      const lines = textOutput.match(/.{1,40}/g) || [textOutput];
-      const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+      // Dividir texto en líneas
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      const maxCharsPerLine = 30;
+      const textLines = textOutput.match(new RegExp(`.{1,${maxCharsPerLine}}`, 'g')) || [textOutput];
+      
+      // Calcular dimensiones
+      const maxWidth = Math.max(
+        ctx.measureText(textLines.reduce((a, b) => a.length > b.length ? a : b, '')).width,
+        400
+      );
       
       canvas.width = maxWidth + padding * 2;
-      canvas.height = lines.length * lineHeight + padding * 2;
+      canvas.height = textLines.length * lineHeight + padding * 2 + 80;
 
-      // Fondo
-      ctx.fillStyle = isDark ? '#151937' : '#FFFFFF';
+      // Fondo con gradiente
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      if (isDark) {
+        gradient.addColorStop(0, '#0A0E27');
+        gradient.addColorStop(1, '#151937');
+      } else {
+        gradient.addColorStop(0, '#F8F9FF');
+        gradient.addColorStop(1, '#FFFFFF');
+      }
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Texto
+      // Borde decorativo
+      ctx.strokeStyle = '#8B5CF6';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+      // Título
+      ctx.font = `bold ${titleSize}px Arial, sans-serif`;
+      ctx.fillStyle = isDark ? '#8B92B8' : '#64748B';
+      ctx.textAlign = 'center';
+      ctx.fillText('Braille a Texto', canvas.width / 2, padding);
+
+      // Texto resultado
       ctx.font = `bold ${fontSize}px Arial, sans-serif`;
       ctx.fillStyle = isDark ? '#EC4899' : '#8B5CF6';
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       
-      lines.forEach((line, index) => {
-        ctx.fillText(line, padding, padding + index * lineHeight);
+      textLines.forEach((line, index) => {
+        ctx.fillText(line, canvas.width / 2, padding + 40 + index * lineHeight);
       });
 
       // Descargar
@@ -171,7 +198,7 @@ export default function BrailleToText() {
       link.click();
     } catch (err) {
       console.error('Error PNG:', err);
-      alert('Error PNG');
+      alert('Error al generar PNG');
     } finally {
       setIsDownloading(false);
     }
@@ -182,30 +209,101 @@ export default function BrailleToText() {
     
     setIsDownloading(true);
     try {
-      // Crear el contenido como texto para descarga
-      const content = `
-        CONVERSIÓN BRAILLE A TEXTO
-        ==========================
-        
-        Entrada Braille:
-        ${brailleInput}
-        
-        Resultado Texto:
-        ${textOutput}
-        
-        Fecha: ${new Date().toLocaleString('es-ES')}
-      `;
+      // Crear canvas para el PDF
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No se pudo crear el contexto');
 
-      // Crear un Blob con el contenido como texto
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-      const link = document.createElement('a');
-      link.download = `texto-braille-${Date.now()}.txt`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
+      // Tamaño A4 en píxeles (72 DPI)
+      const a4Width = 595;
+      const a4Height = 842;
+      canvas.width = a4Width;
+      canvas.height = a4Height;
+
+      // Fondo blanco
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Borde
+      ctx.strokeStyle = '#8B5CF6';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+      // Título principal
+      ctx.font = 'bold 28px Arial, sans-serif';
+      ctx.fillStyle = '#8B5CF6';
+      ctx.textAlign = 'center';
+      ctx.fillText('BRAILLE A TEXTO', canvas.width / 2, 70);
+
+      // Línea decorativa
+      ctx.beginPath();
+      ctx.moveTo(100, 90);
+      ctx.lineTo(canvas.width - 100, 90);
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Entrada Braille
+      ctx.font = 'bold 16px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.textAlign = 'left';
+      ctx.fillText('Entrada Braille:', 50, 130);
+
+      ctx.font = '24px monospace';
+      ctx.fillStyle = '#1E293B';
+      const brailleLines = brailleInput.match(/.{1,20}/g) || [brailleInput];
+      brailleLines.slice(0, 4).forEach((line, i) => {
+        ctx.fillText(line, 50, 165 + i * 35);
+      });
+
+      // Resultado Texto
+      ctx.font = 'bold 16px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.fillText('Resultado en Texto:', 50, 320);
+
+      ctx.font = 'bold 32px Arial, sans-serif';
+      ctx.fillStyle = '#8B5CF6';
+      ctx.textAlign = 'center';
+      const textLines = textOutput.match(/.{1,25}/g) || [textOutput];
+      textLines.slice(0, 8).forEach((line, i) => {
+        ctx.fillText(line, canvas.width / 2, 380 + i * 45);
+      });
+
+      // Fecha
+      ctx.font = '12px Arial, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Generado: ${new Date().toLocaleString('es-ES')}`, canvas.width / 2, canvas.height - 50);
+
+      // Convertir canvas a imagen y abrir para imprimir como PDF
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Braille a Texto - PDF</title>
+            <style>
+              body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+              img { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+              @media print { body { background: white; } img { box-shadow: none; } }
+            </style>
+          </head>
+          <body>
+            <img src="${imgData}" alt="Braille a Texto PDF" />
+            <script>
+              setTimeout(() => { window.print(); }, 500);
+            </script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     } catch (err) {
-      console.error('Error descarga:', err);
-      alert('Error al descargar');
+      console.error('Error PDF:', err);
+      alert('Error al generar PDF');
     } finally {
       setIsDownloading(false);
     }
@@ -588,7 +686,7 @@ export default function BrailleToText() {
                     }}
                   >
                     <FileText size={14} />
-                    TXT
+                    PDF
                   </button>
                 </div>
               </div>
