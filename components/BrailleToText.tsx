@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { brailleToText, isValidBraille } from '@/lib/braille-converter';
 import { addConversionToHistory } from './ConversionHistory';
 import ConversionHistory from './ConversionHistory';
@@ -8,8 +8,6 @@ import BrailleKeyboard from './BrailleKeyboard';
 import { Accessibility, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Keyboard, ChevronDown, ChevronUp, FileText, Image as ImageIcon } from 'lucide-react';
 import { useConversion, useBackendStatus } from '@/lib/hooks/useApi';
 import { useTheme } from '@/context/ThemeContext';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 export default function BrailleToText() {
   const [brailleInput, setBrailleInput] = useState('');
@@ -19,7 +17,6 @@ export default function BrailleToText() {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const outputRef = useRef<HTMLDivElement>(null);
   
   // Hooks para backend
   const { convertir, loading: apiLoading } = useConversion();
@@ -131,57 +128,84 @@ export default function BrailleToText() {
     setBrailleInput(prev => prev.slice(0, -1));
   };
 
-  // Funciones de descarga
-  const downloadAsPNG = async () => {
-    if (!outputRef.current || !textOutput) return;
+  // Funciones de descarga usando Canvas nativo
+  const downloadAsPNG = () => {
+    if (!textOutput) return;
     
     setIsDownloading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const canvas = await html2canvas(outputRef.current, {
-        scale: 3,
-        backgroundColor: isDark ? '#151937' : '#FFFFFF',
-        logging: false,
-        useCORS: true,
-      });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No se pudo crear el contexto del canvas');
+
+      // Configuración del canvas
+      const padding = 40;
+      const fontSize = 32;
+      const lineHeight = fontSize * 1.5;
       
+      // Calcular dimensiones basadas en el texto
+      ctx.font = `${fontSize}px Arial, sans-serif`;
+      const lines = textOutput.match(/.{1,40}/g) || [textOutput];
+      const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+      
+      canvas.width = maxWidth + padding * 2;
+      canvas.height = lines.length * lineHeight + padding * 2;
+
+      // Fondo
+      ctx.fillStyle = isDark ? '#151937' : '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Texto
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      ctx.fillStyle = isDark ? '#EC4899' : '#8B5CF6';
+      ctx.textBaseline = 'top';
+      
+      lines.forEach((line, index) => {
+        ctx.fillText(line, padding, padding + index * lineHeight);
+      });
+
+      // Descargar
       const link = document.createElement('a');
       link.download = `texto-braille-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
-      alert('❌ Error al generar imagen: ' + (err as Error).message);
+      console.error('Error PNG:', err);
+      alert('Error PNG');
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const downloadAsPDF = async () => {
-    if (!outputRef.current || !textOutput) return;
+  const downloadAsPDF = () => {
+    if (!textOutput) return;
     
     setIsDownloading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const canvas = await html2canvas(outputRef.current, {
-        scale: 2,
-        backgroundColor: isDark ? '#151937' : '#FFFFFF',
-        logging: false,
-        useCORS: true,
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-      });
-      
-      const imgWidth = 280;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-      pdf.save(`texto-braille-${Date.now()}.pdf`);
+      // Crear el contenido como texto para descarga
+      const content = `
+        CONVERSIÓN BRAILLE A TEXTO
+        ==========================
+        
+        Entrada Braille:
+        ${brailleInput}
+        
+        Resultado Texto:
+        ${textOutput}
+        
+        Fecha: ${new Date().toLocaleString('es-ES')}
+      `;
+
+      // Crear un Blob con el contenido como texto
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.download = `texto-braille-${Date.now()}.txt`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
     } catch (err) {
-      alert('❌ Error al generar PDF: ' + (err as Error).message);
+      console.error('Error descarga:', err);
+      alert('Error al descargar');
     } finally {
       setIsDownloading(false);
     }
@@ -564,12 +588,11 @@ export default function BrailleToText() {
                     }}
                   >
                     <FileText size={14} />
-                    PDF
+                    TXT
                   </button>
                 </div>
               </div>
               <div
-                ref={outputRef}
                 style={{
                   fontSize: '28px',
                   lineHeight: '1.8',
