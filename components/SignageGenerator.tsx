@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { textToBraille, canConvertToBraille } from '@/lib/braille-converter';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import { FileText, Image as ImageIcon, RotateCcw, Sparkles, FileDown, Printer } from 'lucide-react';
+import { FileText, Image as ImageIcon, RotateCcw, Sparkles, FileDown } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function SignageGenerator() {
@@ -13,7 +11,6 @@ export default function SignageGenerator() {
   const [error, setError] = useState('');
   const [highContrast, setHighContrast] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
   
   // Hook para el tema global
   const { theme: themeMode } = useTheme();
@@ -79,71 +76,129 @@ export default function SignageGenerator() {
     return '12px';
   };
 
-  const downloadAsPDF = async () => {
-    if (!previewRef.current || !brailleText) return;
+  // Función para crear el canvas de la señalética
+  const createSignCanvas = (scale: number = 2) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('No se pudo crear el contexto');
+
+    // Dimensiones del canvas
+    const width = 800 * scale;
+    const height = 400 * scale;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Fondo
+    ctx.fillStyle = highContrast ? '#000000' : '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+
+    // Borde
+    ctx.strokeStyle = highContrast ? '#10B981' : '#000000';
+    ctx.lineWidth = 8 * scale;
+    ctx.strokeRect(4 * scale, 4 * scale, width - 8 * scale, height - 8 * scale);
+
+    // Texto principal
+    const textFontSize = signText.length > 20 ? 48 * scale : 64 * scale;
+    ctx.font = `bold ${textFontSize}px Arial, sans-serif`;
+    ctx.fillStyle = highContrast ? '#FFFFFF' : '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(signText.toUpperCase(), width / 2, height * 0.35);
+
+    // Texto Braille
+    const brailleFontSize = brailleText.length > 20 ? 56 * scale : 72 * scale;
+    ctx.font = `${brailleFontSize}px monospace`;
+    ctx.fillStyle = '#10B981';
+    ctx.fillText(brailleText, width / 2, height * 0.7);
+
+    return canvas;
+  };
+
+  const downloadAsPNG = () => {
+    if (!brailleText) return;
 
     setIsDownloading(true);
     try {
-      // Asegurar que el contenido esté renderizado
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = createSignCanvas(3);
       
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
-        backgroundColor: highContrast ? '#000000' : '#ffffff',
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const imgWidth = 297; // A4 landscape width
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`senaletica-braille-${Date.now()}.pdf`);
-      
-      // Mostrar mensaje de éxito
-      alert('✅ PDF descargado exitosamente');
+      const link = document.createElement('a');
+      link.download = `senaletica-braille-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
     } catch (err) {
-      alert('❌ Error al generar PDF: ' + (err as Error).message);
-      console.error('Error completo:', err);
+      console.error('Error PNG:', err);
+      alert('Error al generar PNG');
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const downloadAsImage = async () => {
-    if (!previewRef.current || !brailleText) return;
+  const downloadAsPDF = () => {
+    if (!brailleText) return;
 
     setIsDownloading(true);
     try {
-      // Asegurar que el contenido esté renderizado
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = createSignCanvas(2);
+      const imgData = canvas.toDataURL('image/png', 1.0);
       
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 3,
-        backgroundColor: highContrast ? '#000000' : '#ffffff',
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-      });
-
-      const link = document.createElement('a');
-      link.download = `senaletica-braille-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      
-      // Mostrar mensaje de éxito
-      alert('✅ Imagen descargada exitosamente');
+      // Abrir ventana para imprimir/guardar como PDF
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Señalética Braille - PDF</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                min-height: 100vh; 
+                background: #f0f0f0;
+                padding: 20px;
+              }
+              img { 
+                max-width: 100%; 
+                height: auto; 
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                border-radius: 8px;
+              }
+              @media print { 
+                body { background: white; padding: 0; } 
+                img { box-shadow: none; border-radius: 0; max-width: 100%; }
+              }
+              .instructions {
+                position: fixed;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #4F46E5;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                z-index: 1000;
+              }
+              @media print { .instructions { display: none; } }
+            </style>
+          </head>
+          <body>
+            <div class="instructions">📄 Presiona Ctrl+P o Cmd+P para guardar como PDF</div>
+            <img src="${imgData}" alt="Señalética Braille" />
+            <script>
+              setTimeout(() => { window.print(); }, 800);
+            </script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     } catch (err) {
-      alert('❌ Error al generar imagen: ' + (err as Error).message);
-      console.error('Error completo:', err);
+      console.error('Error PDF:', err);
+      alert('Error al generar PDF');
     } finally {
       setIsDownloading(false);
     }
@@ -153,49 +208,6 @@ export default function SignageGenerator() {
     setSignText('');
     setBrailleText('');
     setError('');
-  };
-
-  const downloadAsWord = () => {
-    if (!brailleText) return;
-    const html = `
-      <html>
-        <head><meta charset="utf-8"><title>Senaletica Braille</title></head>
-        <body style="font-family: Arial, sans-serif; padding: 40px;">
-          <h1 style="text-align: center; font-size: 32px;">${signText}</h1>
-          <p style="text-align: center; font-size: 48px; font-family: monospace; letter-spacing: 8px;">${brailleText}</p>
-          <hr/>
-          <p style="text-align: center; color: #666; font-size: 12px;">Generado por Braille App - Senaletica Accesible</p>
-        </body>
-      </html>
-    `;
-    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `senaletica-braille-${Date.now()}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('✅ Word descargado exitosamente');
-  };
-
-  const handlePrint = () => {
-    if (!previewRef.current || !brailleText) return;
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head><title>Imprimir Senaletica</title></head>
-          <body style="display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: ${highContrast ? '#000' : '#fff'};">
-            <div style="text-align: center; padding: 40px;">
-              <h1 style="font-size: 48px; color: ${highContrast ? '#fff' : '#000'}; margin-bottom: 20px;">${signText}</h1>
-              <p style="font-size: 72px; font-family: monospace; letter-spacing: 12px; color: ${highContrast ? '#fff' : '#000'};">${brailleText}</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
   };
 
   return (
@@ -445,7 +457,6 @@ export default function SignageGenerator() {
             
             {/* Preview Container */}
             <div
-              ref={previewRef}
               style={{
                 borderRadius: '16px',
                 padding: '40px',
@@ -502,13 +513,12 @@ export default function SignageGenerator() {
             </div>
 
             {/* Botones de descarga */}
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={downloadAsPDF}
                 disabled={isDownloading}
                 style={{
                   flex: 1,
-                  minWidth: '140px',
                   padding: '14px',
                   background: isDownloading ? theme.border : 'linear-gradient(135deg, #4F46E5, #06B6D4)',
                   border: 'none',
@@ -550,16 +560,15 @@ export default function SignageGenerator() {
                 ) : (
                   <>
                     <FileText size={18} />
-                    PDF
+                    Descargar PDF
                   </>
                 )}
               </button>
               <button
-                onClick={downloadAsImage}
+                onClick={downloadAsPNG}
                 disabled={isDownloading}
                 style={{
                   flex: 1,
-                  minWidth: '140px',
                   padding: '14px',
                   background: isDownloading ? theme.border : 'linear-gradient(135deg, #8B5CF6, #EC4899)',
                   border: 'none',
@@ -601,71 +610,9 @@ export default function SignageGenerator() {
                 ) : (
                   <>
                     <ImageIcon size={18} />
-                    PNG
+                    Descargar PNG
                   </>
                 )}
-              </button>
-              <button
-                onClick={downloadAsWord}
-                style={{
-                  flex: 1,
-                  minWidth: '140px',
-                  padding: '14px',
-                  background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
-                  border: 'none',
-                  borderRadius: '10px',
-                  color: '#FFFFFF',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(37, 99, 235, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <FileText size={18} />
-                Word
-              </button>
-              <button
-                onClick={handlePrint}
-                style={{
-                  flex: 1,
-                  minWidth: '140px',
-                  padding: '14px',
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
-                  border: 'none',
-                  borderRadius: '10px',
-                  color: '#FFFFFF',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(16, 185, 129, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <Printer size={18} />
-                Imprimir
               </button>
             </div>
 
