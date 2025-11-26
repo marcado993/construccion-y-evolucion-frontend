@@ -1,16 +1,40 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Keyboard } from 'lucide-react';
 
 interface BrailleKeyboardProps {
   onInput: (brailleChar: string) => void;
   onSpace: () => void;
   onDelete: () => void;
+  isDark?: boolean;
 }
 
-export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleKeyboardProps) {
+export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = true }: BrailleKeyboardProps) {
   const [activeDots, setActiveDots] = useState<Set<number>>(new Set());
+
+  const colors = {
+    dark: {
+      bg: '#0A0E27',
+      card: '#151937',
+      text: '#FFFFFF',
+      textSecondary: '#8B92B8',
+      border: '#252B4F',
+      primary: '#8B5CF6',
+      secondary: '#EC4899',
+    },
+    light: {
+      bg: '#F8F9FF',
+      card: '#FFFFFF',
+      text: '#1E293B',
+      textSecondary: '#64748B',
+      border: '#E2E8F0',
+      primary: '#8B5CF6',
+      secondary: '#EC4899',
+    }
+  };
+
+  const theme = isDark ? colors.dark : colors.light;
 
   // Matriz de puntos Braille: [1,2,3] [4,5,6]
   const dots = [
@@ -65,20 +89,31 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #0A0E27 0%, #151937 100%)',
+      background: isDark 
+        ? 'linear-gradient(135deg, #0A0E27 0%, #151937 100%)'
+        : 'linear-gradient(135deg, #F8F9FF 0%, #FFFFFF 100%)',
       borderRadius: '16px',
       padding: '24px',
-      border: '1px solid #252B4F',
+      border: `1px solid ${theme.border}`,
     }}>
-      <h3 style={{
-        fontSize: '18px',
-        fontWeight: 700,
-        color: '#FFFFFF',
-        marginBottom: '16px',
-        textAlign: 'center',
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: '10px',
+        marginBottom: '16px' 
       }}>
-        Teclado Braille Visual
-      </h3>
+        <Keyboard size={22} color={theme.primary} />
+        <h3 style={{
+          fontSize: '18px',
+          fontWeight: 700,
+          color: theme.text,
+          textAlign: 'center',
+          margin: 0,
+        }}>
+          Teclado Braille Visual
+        </h3>
+      </div>
 
       {/* Matriz de puntos */}
       <div style={{
@@ -101,18 +136,19 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
                 height: '60px',
                 borderRadius: '50%',
                 background: activeDots.has(dot.id) 
-                  ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)'
-                  : '#151937',
+                  ? `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`
+                  : theme.card,
                 border: activeDots.has(dot.id) 
-                  ? '3px solid #818CF8'
-                  : '3px solid #252B4F',
+                  ? `3px solid ${theme.primary}`
+                  : `3px solid ${theme.border}`,
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 fontSize: '14px',
                 fontWeight: 700,
-                color: activeDots.has(dot.id) ? '#FFFFFF' : '#8B92B8',
+                color: activeDots.has(dot.id) ? '#FFFFFF' : theme.textSecondary,
                 gridColumn: dot.col + 1,
                 gridRow: dot.row + 1,
+                boxShadow: activeDots.has(dot.id) ? `0 4px 12px ${theme.primary}40` : 'none',
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = 'scale(1.1)';
@@ -129,8 +165,8 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
 
       {/* Vista previa */}
       <div style={{
-        background: '#0A0E27',
-        border: '2px solid #252B4F',
+        background: theme.bg,
+        border: `2px solid ${theme.border}`,
         borderRadius: '12px',
         padding: '16px',
         marginBottom: '16px',
@@ -142,7 +178,7 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
       }}>
         <span style={{
           fontSize: '48px',
-          color: '#FFFFFF',
+          color: theme.text,
           fontFamily: 'monospace',
         }}>
           {activeDots.size > 0 ? dotsToUnicode(activeDots) : '⠀'}
@@ -162,7 +198,7 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
             padding: '12px',
             background: activeDots.size > 0 
               ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-              : '#1F2937',
+              : theme.border,
             border: 'none',
             borderRadius: '8px',
             color: '#FFFFFF',
@@ -181,14 +217,14 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
             e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
-          Siguiente Letra
+          ✓ Añadir
         </button>
 
         <button
           onClick={onSpace}
           style={{
             padding: '12px',
-            background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)',
+            background: `linear-gradient(135deg, ${theme.primary} 0%, #4338CA 100%)`,
             border: 'none',
             borderRadius: '8px',
             color: '#FFFFFF',
@@ -204,7 +240,7 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
             e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
-          Siguiente Palabra
+          ␣ Espacio
         </button>
 
         <button
@@ -243,17 +279,17 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete }: BrailleK
       <div style={{
         marginTop: '16px',
         padding: '12px',
-        background: '#0A0E27',
+        background: theme.bg,
         borderRadius: '8px',
-        border: '1px solid #252B4F',
+        border: `1px solid ${theme.border}`,
       }}>
         <p style={{
           fontSize: '12px',
-          color: '#8B92B8',
+          color: theme.textSecondary,
           margin: 0,
           textAlign: 'center',
         }}>
-          Haz clic en los puntos para formar un carácter Braille
+          💡 Selecciona los puntos (1-6) para formar un carácter Braille y presiona &quot;Añadir&quot;
         </p>
       </div>
     </div>
