@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { textToBraille, canConvertToBraille } from '@/lib/braille-converter';
 import { addConversionToHistory } from './ConversionHistory';
 import ConversionHistory from './ConversionHistory';
-import { Hand, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Download, FileText, Image, Printer } from 'lucide-react';
+import { Hand, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import { useConversion, useBackendStatus } from '@/lib/hooks/useApi';
 import { useTheme } from '@/context/ThemeContext';
-import { downloadAsPNG, downloadAsPDF, downloadAsWord, printElement } from '@/lib/export-utils';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function TextToBraille() {
   const [inputText, setInputText] = useState('');
@@ -15,7 +16,8 @@ export default function TextToBraille() {
   const [error, setError] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const outputRef = useRef<HTMLDivElement>(null);
   
   // Hooks para backend
   const { convertir, loading: apiLoading } = useConversion();
@@ -109,10 +111,61 @@ export default function TextToBraille() {
     setError('');
   };
 
-  const handleDownloadPNG = async () => { try { await downloadAsPNG('texto-braille-result', 'texto-a-braille.png'); setShowDownloadMenu(false); } catch { alert('Error PNG'); } };
-  const handleDownloadPDF = async () => { try { await downloadAsPDF('texto-braille-result', 'texto-a-braille.pdf'); setShowDownloadMenu(false); } catch { alert('Error PDF'); } };
-  const handleDownloadWord = () => { try { downloadAsWord(inputText, brailleOutput, 'texto-a-braille', 'texto-a-braille.doc'); setShowDownloadMenu(false); } catch { alert('Error Word'); } };
-  const handlePrint = () => { try { printElement('texto-braille-result'); setShowDownloadMenu(false); } catch { alert('Error'); } };
+  // Funciones de descarga
+  const downloadAsPNG = async () => {
+    if (!outputRef.current || !brailleOutput) return;
+    
+    setIsDownloading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = await html2canvas(outputRef.current, {
+        scale: 3,
+        backgroundColor: isDark ? '#151937' : '#FFFFFF',
+        logging: false,
+        useCORS: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `braille-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      alert('❌ Error al generar imagen: ' + (err as Error).message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const downloadAsPDF = async () => {
+    if (!outputRef.current || !brailleOutput) return;
+    
+    setIsDownloading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = await html2canvas(outputRef.current, {
+        scale: 2,
+        backgroundColor: isDark ? '#151937' : '#FFFFFF',
+        logging: false,
+        useCORS: true,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const imgWidth = 280;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`braille-${Date.now()}.pdf`);
+    } catch (err) {
+      alert('❌ Error al generar PDF: ' + (err as Error).message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <>
@@ -334,7 +387,7 @@ export default function TextToBraille() {
 
           {/* Output Braille */}
           {brailleOutput && (
-            <div id="texto-braille-result" style={{
+            <div style={{
               background: isDark ? `linear-gradient(135deg, ${theme.bg} 0%, ${theme.card} 100%)` : theme.card,
               border: `2px solid ${theme.primary}`,
               borderRadius: '16px',
@@ -346,6 +399,8 @@ export default function TextToBraille() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '16px',
+                flexWrap: 'wrap',
+                gap: '10px',
               }}>
                 <h3 style={{
                   fontSize: '16px',
@@ -355,7 +410,7 @@ export default function TextToBraille() {
                 }}>
                   🎯 Resultado en Braille
                 </h3>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     onClick={handleCopy}
                     style={{
@@ -382,23 +437,54 @@ export default function TextToBraille() {
                     <Copy size={14} />
                     Copiar
                   </button>
-                  <div style={{ position: 'relative' }}>
-                    <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} style={{ padding: '8px 14px', background: '#10B981', border: 'none', borderRadius: '8px', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Download size={14} /> Descargar
-                    </button>
-                    {showDownloadMenu && (
-                      <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: theme.card, border: `2px solid ${theme.border}`, borderRadius: 12, padding: 8, zIndex: 100, minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
-                        <button onClick={handleDownloadPNG} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><Image size={16} color="#10B981" /> PNG</button>
-                        <button onClick={handleDownloadPDF} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><FileText size={16} color="#DC2626" /> PDF</button>
-                        <button onClick={handleDownloadWord} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><FileText size={16} color="#2563EB" /> Word</button>
-                        <hr style={{ border: 'none', borderTop: `1px solid ${theme.border}`, margin: '8px 0' }} />
-                        <button onClick={handlePrint} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><Printer size={16} color="#8B5CF6" /> Imprimir</button>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={downloadAsPNG}
+                    disabled={isDownloading}
+                    style={{
+                      padding: '8px 14px',
+                      background: isDownloading ? theme.border : 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: isDownloading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s',
+                      opacity: isDownloading ? 0.6 : 1,
+                    }}
+                  >
+                    <ImageIcon size={14} />
+                    PNG
+                  </button>
+                  <button
+                    onClick={downloadAsPDF}
+                    disabled={isDownloading}
+                    style={{
+                      padding: '8px 14px',
+                      background: isDownloading ? theme.border : 'linear-gradient(135deg, #10B981, #059669)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: isDownloading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s',
+                      opacity: isDownloading ? 0.6 : 1,
+                    }}
+                  >
+                    <FileText size={14} />
+                    PDF
+                  </button>
                 </div>
               </div>
               <div
+                ref={outputRef}
                 style={{
                   fontSize: '42px',
                   lineHeight: '1.8',
@@ -407,6 +493,9 @@ export default function TextToBraille() {
                   fontFamily: 'monospace',
                   color: theme.secondary,
                   letterSpacing: '4px',
+                  padding: '20px',
+                  background: isDark ? theme.card : '#F8F9FF',
+                  borderRadius: '12px',
                 }}
                 aria-label="Resultado en Braille"
               >

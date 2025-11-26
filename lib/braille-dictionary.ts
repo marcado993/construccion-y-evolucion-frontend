@@ -20,9 +20,37 @@ export const BRAILLE_ALPHABET: Record<string, string> = {
   'ü': '⠳',
   
   // Puntuación
-  '.': '⠲', ',': '⠂', ';': '⠆', ':': '⠒', '?': '⠦',
+  '.': '⠄', ',': '⠂', ';': '⠆', ':': '⠒', '?': '⠢',
   '¿': '⠢', '!': '⠖', '¡': '⠖', '-': '⠤', '(': '⠐⠣',
   ')': '⠐⠜', '"': '⠦', "'": '⠄', ' ': '⠀',
+  '«': '⠦', '»': '⠴', '…': '⠄⠄⠄',
+  
+  // Operadores matemáticos y símbolos especiales
+  '+': '⠐⠖', // Suma (con prefijo para diferenciar de !)
+  '*': '⠡', // Multiplicación
+  '×': '⠡', // Multiplicación alternativo
+  '/': '⠸⠌', // División  
+  '÷': '⠸⠌', // División alternativo
+  '=': '⠶', // Igual
+  '<': '⠐⠅', // Menor que
+  '>': '⠨⠂', // Mayor que
+  '%': '⠚⠴', // Porcentaje
+  '@': '⠈⠁', // Arroba
+  '#': '⠼', // Numeral/hashtag
+  '&': '⠯', // Ampersand
+  '_': '⠤⠤', // Guion bajo
+  '[': '⠷', // Corchete izq
+  ']': '⠾', // Corchete der
+  '{': '⠐⠷', // Llave izq
+  '}': '⠐⠾', // Llave der
+  '\\': '⠸⠡', // Backslash
+  '|': '⠸⠳', // Pipe
+  '~': '⠈⠱', // Tilde
+  '^': '⠈⠢', // Caret
+  '`': '⠈', // Backtick
+  '$': '⠈⠎', // Dólar
+  '€': '⠈⠑', // Euro
+  '°': '⠴', // Grado
 };
 
 // Inversión del diccionario para Braille → Texto

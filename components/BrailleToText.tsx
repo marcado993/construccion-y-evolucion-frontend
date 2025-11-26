@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { brailleToText, isValidBraille } from '@/lib/braille-converter';
 import { addConversionToHistory } from './ConversionHistory';
 import ConversionHistory from './ConversionHistory';
 import BrailleKeyboard from './BrailleKeyboard';
-import { Accessibility, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Keyboard, ChevronDown, ChevronUp } from 'lucide-react';
+import { Accessibility, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Keyboard, ChevronDown, ChevronUp, FileText, Image as ImageIcon } from 'lucide-react';
 import { useConversion, useBackendStatus } from '@/lib/hooks/useApi';
 import { useTheme } from '@/context/ThemeContext';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function BrailleToText() {
   const [brailleInput, setBrailleInput] = useState('');
@@ -16,6 +18,8 @@ export default function BrailleToText() {
   const [showHistory, setShowHistory] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const outputRef = useRef<HTMLDivElement>(null);
   
   // Hooks para backend
   const { convertir, loading: apiLoading } = useConversion();
@@ -125,6 +129,62 @@ export default function BrailleToText() {
 
   const handleBrailleDelete = () => {
     setBrailleInput(prev => prev.slice(0, -1));
+  };
+
+  // Funciones de descarga
+  const downloadAsPNG = async () => {
+    if (!outputRef.current || !textOutput) return;
+    
+    setIsDownloading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = await html2canvas(outputRef.current, {
+        scale: 3,
+        backgroundColor: isDark ? '#151937' : '#FFFFFF',
+        logging: false,
+        useCORS: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `texto-braille-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      alert('❌ Error al generar imagen: ' + (err as Error).message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const downloadAsPDF = async () => {
+    if (!outputRef.current || !textOutput) return;
+    
+    setIsDownloading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = await html2canvas(outputRef.current, {
+        scale: 2,
+        backgroundColor: isDark ? '#151937' : '#FFFFFF',
+        logging: false,
+        useCORS: true,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const imgWidth = 280;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`texto-braille-${Date.now()}.pdf`);
+    } catch (err) {
+      alert('❌ Error al generar PDF: ' + (err as Error).message);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -424,6 +484,8 @@ export default function BrailleToText() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '16px',
+                flexWrap: 'wrap',
+                gap: '10px',
               }}>
                 <h3 style={{
                   fontSize: '16px',
@@ -433,34 +495,81 @@ export default function BrailleToText() {
                 }}>
                   🎯 Resultado en Texto
                 </h3>
-                <button
-                  onClick={handleCopy}
-                  style={{
-                    padding: '8px 14px',
-                    background: theme.primary,
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#FFFFFF',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = theme.secondary;
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = theme.primary;
-                  }}
-                >
-                  <Copy size={14} />
-                  Copiar
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={handleCopy}
+                    style={{
+                      padding: '8px 14px',
+                      background: theme.primary,
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = theme.secondary;
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = theme.primary;
+                    }}
+                  >
+                    <Copy size={14} />
+                    Copiar
+                  </button>
+                  <button
+                    onClick={downloadAsPNG}
+                    disabled={isDownloading}
+                    style={{
+                      padding: '8px 14px',
+                      background: isDownloading ? theme.border : 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: isDownloading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s',
+                      opacity: isDownloading ? 0.6 : 1,
+                    }}
+                  >
+                    <ImageIcon size={14} />
+                    PNG
+                  </button>
+                  <button
+                    onClick={downloadAsPDF}
+                    disabled={isDownloading}
+                    style={{
+                      padding: '8px 14px',
+                      background: isDownloading ? theme.border : 'linear-gradient(135deg, #10B981, #059669)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: isDownloading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s',
+                      opacity: isDownloading ? 0.6 : 1,
+                    }}
+                  >
+                    <FileText size={14} />
+                    PDF
+                  </button>
+                </div>
               </div>
               <div
+                ref={outputRef}
                 style={{
                   fontSize: '28px',
                   lineHeight: '1.8',
@@ -468,6 +577,9 @@ export default function BrailleToText() {
                   userSelect: 'all',
                   color: theme.secondary,
                   fontWeight: 600,
+                  padding: '20px',
+                  background: isDark ? theme.card : '#F8F9FF',
+                  borderRadius: '12px',
                 }}
                 aria-label="Resultado en texto"
               >

@@ -12,12 +12,19 @@ export function textToBraille(text: string): string {
     const char = text[i];
     const lowerChar = char.toLowerCase();
     
+    // Primero buscar el carácter directamente (para símbolos como +, *, /, etc.)
+    const directBraille = BRAILLE_ALPHABET[char];
+    if (directBraille) {
+      result += directBraille;
+      continue;
+    }
+    
     // Si es mayúscula, agregar indicador
     if (char !== lowerChar && char !== ' ') {
       result += CAPITAL_INDICATOR;
     }
     
-    // Convertir el carácter
+    // Convertir el carácter en minúscula
     const brailleChar = BRAILLE_ALPHABET[lowerChar];
     if (brailleChar) {
       result += brailleChar;
@@ -81,7 +88,15 @@ export function canConvertToBraille(text: string): { valid: boolean; error?: str
   
   const unsupportedChars = text
     .split('')
-    .filter(char => !BRAILLE_ALPHABET[char.toLowerCase()] && char !== ' ')
+    .filter(char => {
+      // El carácter es soportado si:
+      // 1. Está en el diccionario directamente (símbolos, números)
+      // 2. Su versión minúscula está en el diccionario (letras)
+      // 3. Es un espacio
+      const directMatch = BRAILLE_ALPHABET[char];
+      const lowerMatch = BRAILLE_ALPHABET[char.toLowerCase()];
+      return !directMatch && !lowerMatch && char !== ' ';
+    })
     .filter((char, index, self) => self.indexOf(char) === index);
   
   if (unsupportedChars.length > 0) {
