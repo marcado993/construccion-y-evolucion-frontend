@@ -110,7 +110,10 @@ export default function TextToBraille() {
 
   // Funciones de descarga usando Canvas nativo
   const downloadAsPNG = () => {
-    if (!brailleOutput) return;
+    if (!brailleOutput) {
+      alert('Primero convierte algún texto a Braille');
+      return;
+    }
     
     setIsDownloading(true);
     try {
@@ -124,8 +127,15 @@ export default function TextToBraille() {
       const lineHeight = fontSize * 1.8;
       const titleSize = 24;
       
+      // Colores fijos (evitar CSS computado con lab())
+      const bgColor1 = isDark ? '#0A0E27' : '#F8F9FF';
+      const bgColor2 = isDark ? '#151937' : '#FFFFFF';
+      const borderColor = '#4F46E5';
+      const titleColor = isDark ? '#8B92B8' : '#64748B';
+      const textColor = isDark ? '#06B6D4' : '#4F46E5';
+      
       // Dividir texto en líneas
-      ctx.font = `${fontSize}px monospace`;
+      ctx.font = `${fontSize}px Arial`;
       const maxCharsPerLine = 15;
       const brailleLines = brailleOutput.match(new RegExp(`.{1,${maxCharsPerLine}}`, 'g')) || [brailleOutput];
       
@@ -140,30 +150,25 @@ export default function TextToBraille() {
 
       // Fondo con gradiente
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      if (isDark) {
-        gradient.addColorStop(0, '#0A0E27');
-        gradient.addColorStop(1, '#151937');
-      } else {
-        gradient.addColorStop(0, '#F8F9FF');
-        gradient.addColorStop(1, '#FFFFFF');
-      }
+      gradient.addColorStop(0, bgColor1);
+      gradient.addColorStop(1, bgColor2);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Borde decorativo
-      ctx.strokeStyle = isDark ? '#4F46E5' : '#4F46E5';
+      ctx.strokeStyle = borderColor;
       ctx.lineWidth = 4;
       ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
       // Título
-      ctx.font = `bold ${titleSize}px Arial, sans-serif`;
-      ctx.fillStyle = isDark ? '#8B92B8' : '#64748B';
+      ctx.font = `bold ${titleSize}px Arial`;
+      ctx.fillStyle = titleColor;
       ctx.textAlign = 'center';
       ctx.fillText('Texto a Braille', canvas.width / 2, padding);
 
       // Texto Braille
-      ctx.font = `${fontSize}px monospace`;
-      ctx.fillStyle = isDark ? '#06B6D4' : '#4F46E5';
+      ctx.font = `${fontSize}px Arial`;
+      ctx.fillStyle = textColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       
@@ -175,9 +180,12 @@ export default function TextToBraille() {
       const link = document.createElement('a');
       link.download = `braille-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error('Error PNG:', err);
+      alert('Error al generar PNG: ' + (err instanceof Error ? err.message : 'Error desconocido'));
       alert('Error al generar PNG');
     } finally {
       setIsDownloading(false);
