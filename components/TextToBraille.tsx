@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { textToBraille, canConvertToBraille } from '@/lib/braille-converter';
 import { addConversionToHistory } from './ConversionHistory';
 import ConversionHistory from './ConversionHistory';
-import { Hand, Copy, RotateCcw, Sparkles, Wifi, WifiOff } from 'lucide-react';
+import { Hand, Copy, RotateCcw, Sparkles, Wifi, WifiOff, Download, FileText, Image, Printer } from 'lucide-react';
 import { useConversion, useBackendStatus } from '@/lib/hooks/useApi';
 import { useTheme } from '@/context/ThemeContext';
+import { downloadAsPNG, downloadAsPDF, downloadAsWord, printElement } from '@/lib/export-utils';
 
 export default function TextToBraille() {
   const [inputText, setInputText] = useState('');
@@ -14,6 +15,7 @@ export default function TextToBraille() {
   const [error, setError] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   
   // Hooks para backend
   const { convertir, loading: apiLoading } = useConversion();
@@ -106,6 +108,11 @@ export default function TextToBraille() {
     setBrailleOutput('');
     setError('');
   };
+
+  const handleDownloadPNG = async () => { try { await downloadAsPNG('texto-braille-result', 'texto-a-braille.png'); setShowDownloadMenu(false); } catch { alert('Error PNG'); } };
+  const handleDownloadPDF = async () => { try { await downloadAsPDF('texto-braille-result', 'texto-a-braille.pdf'); setShowDownloadMenu(false); } catch { alert('Error PDF'); } };
+  const handleDownloadWord = () => { try { downloadAsWord(inputText, brailleOutput, 'texto-a-braille', 'texto-a-braille.doc'); setShowDownloadMenu(false); } catch { alert('Error Word'); } };
+  const handlePrint = () => { try { printElement('texto-braille-result'); setShowDownloadMenu(false); } catch { alert('Error'); } };
 
   return (
     <>
@@ -327,7 +334,7 @@ export default function TextToBraille() {
 
           {/* Output Braille */}
           {brailleOutput && (
-            <div style={{
+            <div id="texto-braille-result" style={{
               background: isDark ? `linear-gradient(135deg, ${theme.bg} 0%, ${theme.card} 100%)` : theme.card,
               border: `2px solid ${theme.primary}`,
               borderRadius: '16px',
@@ -348,32 +355,48 @@ export default function TextToBraille() {
                 }}>
                   🎯 Resultado en Braille
                 </h3>
-                <button
-                  onClick={handleCopy}
-                  style={{
-                    padding: '8px 14px',
-                    background: theme.primary,
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#FFFFFF',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = theme.secondary;
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = theme.primary;
-                  }}
-                >
-                  <Copy size={14} />
-                  Copiar
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={handleCopy}
+                    style={{
+                      padding: '8px 14px',
+                      background: theme.primary,
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = theme.secondary;
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = theme.primary;
+                    }}
+                  >
+                    <Copy size={14} />
+                    Copiar
+                  </button>
+                  <div style={{ position: 'relative' }}>
+                    <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} style={{ padding: '8px 14px', background: '#10B981', border: 'none', borderRadius: '8px', color: '#FFF', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Download size={14} /> Descargar
+                    </button>
+                    {showDownloadMenu && (
+                      <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: theme.card, border: `2px solid ${theme.border}`, borderRadius: 12, padding: 8, zIndex: 100, minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                        <button onClick={handleDownloadPNG} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><Image size={16} color="#10B981" /> PNG</button>
+                        <button onClick={handleDownloadPDF} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><FileText size={16} color="#DC2626" /> PDF</button>
+                        <button onClick={handleDownloadWord} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><FileText size={16} color="#2563EB" /> Word</button>
+                        <hr style={{ border: 'none', borderTop: `1px solid ${theme.border}`, margin: '8px 0' }} />
+                        <button onClick={handlePrint} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: 8, color: theme.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}><Printer size={16} color="#8B5CF6" /> Imprimir</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
               <div
                 style={{

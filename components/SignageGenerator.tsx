@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { textToBraille, canConvertToBraille } from '@/lib/braille-converter';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { FileText, Image as ImageIcon, RotateCcw, Sparkles, FileDown } from 'lucide-react';
+import { FileText, Image as ImageIcon, RotateCcw, Sparkles, FileDown, Printer } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function SignageGenerator() {
@@ -12,6 +12,7 @@ export default function SignageGenerator() {
   const [brailleText, setBrailleText] = useState('');
   const [error, setError] = useState('');
   const [highContrast, setHighContrast] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   
   // Hook para el tema global
@@ -81,10 +82,17 @@ export default function SignageGenerator() {
   const downloadAsPDF = async () => {
     if (!previewRef.current || !brailleText) return;
 
+    setIsDownloading(true);
     try {
+      // Asegurar que el contenido esté renderizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const canvas = await html2canvas(previewRef.current, {
         scale: 2,
         backgroundColor: highContrast ? '#000000' : '#ffffff',
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -99,28 +107,45 @@ export default function SignageGenerator() {
 
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`senaletica-braille-${Date.now()}.pdf`);
+      
+      // Mostrar mensaje de éxito
+      alert('✅ PDF descargado exitosamente');
     } catch (err) {
-      alert('Error al generar PDF');
-      console.error(err);
+      alert('❌ Error al generar PDF: ' + (err as Error).message);
+      console.error('Error completo:', err);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
   const downloadAsImage = async () => {
     if (!previewRef.current || !brailleText) return;
 
+    setIsDownloading(true);
     try {
+      // Asegurar que el contenido esté renderizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const canvas = await html2canvas(previewRef.current, {
         scale: 3,
         backgroundColor: highContrast ? '#000000' : '#ffffff',
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
       });
 
       const link = document.createElement('a');
       link.download = `senaletica-braille-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      
+      // Mostrar mensaje de éxito
+      alert('✅ Imagen descargada exitosamente');
     } catch (err) {
-      alert('Error al generar imagen');
-      console.error(err);
+      alert('❌ Error al generar imagen: ' + (err as Error).message);
+      console.error('Error completo:', err);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -130,8 +155,62 @@ export default function SignageGenerator() {
     setError('');
   };
 
+  const downloadAsWord = () => {
+    if (!brailleText) return;
+    const html = `
+      <html>
+        <head><meta charset="utf-8"><title>Senaletica Braille</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px;">
+          <h1 style="text-align: center; font-size: 32px;">${signText}</h1>
+          <p style="text-align: center; font-size: 48px; font-family: monospace; letter-spacing: 8px;">${brailleText}</p>
+          <hr/>
+          <p style="text-align: center; color: #666; font-size: 12px;">Generado por Braille App - Senaletica Accesible</p>
+        </body>
+      </html>
+    `;
+    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `senaletica-braille-${Date.now()}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('✅ Word descargado exitosamente');
+  };
+
+  const handlePrint = () => {
+    if (!previewRef.current || !brailleText) return;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head><title>Imprimir Senaletica</title></head>
+          <body style="display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: ${highContrast ? '#000' : '#fff'};">
+            <div style="text-align: center; padding: 40px;">
+              <h1 style="font-size: 48px; color: ${highContrast ? '#fff' : '#000'}; margin-bottom: 20px;">${signText}</h1>
+              <p style="font-size: 72px; font-family: monospace; letter-spacing: 12px; color: ${highContrast ? '#fff' : '#000'};">${brailleText}</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   return (
-    <div>
+    <>
+      <style>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
+      <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -423,13 +502,116 @@ export default function SignageGenerator() {
             </div>
 
             {/* Botones de descarga */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <button
                 onClick={downloadAsPDF}
+                disabled={isDownloading}
                 style={{
                   flex: 1,
+                  minWidth: '140px',
                   padding: '14px',
-                  background: 'linear-gradient(135deg, #4F46E5, #06B6D4)',
+                  background: isDownloading ? theme.border : 'linear-gradient(135deg, #4F46E5, #06B6D4)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#FFFFFF',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  cursor: isDownloading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s',
+                  opacity: isDownloading ? 0.6 : 1,
+                }}
+                onMouseOver={(e) => {
+                  if (!isDownloading) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(79, 70, 229, 0.4)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                {isDownloading ? (
+                  <>
+                    <div style={{
+                      width: '18px',
+                      height: '18px',
+                      border: '3px solid rgba(255,255,255,0.3)',
+                      borderTop: '3px solid #FFFFFF',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                    }} />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <FileText size={18} />
+                    PDF
+                  </>
+                )}
+              </button>
+              <button
+                onClick={downloadAsImage}
+                disabled={isDownloading}
+                style={{
+                  flex: 1,
+                  minWidth: '140px',
+                  padding: '14px',
+                  background: isDownloading ? theme.border : 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#FFFFFF',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  cursor: isDownloading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s',
+                  opacity: isDownloading ? 0.6 : 1,
+                }}
+                onMouseOver={(e) => {
+                  if (!isDownloading) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(139, 92, 246, 0.4)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                {isDownloading ? (
+                  <>
+                    <div style={{
+                      width: '18px',
+                      height: '18px',
+                      border: '3px solid rgba(255,255,255,0.3)',
+                      borderTop: '3px solid #FFFFFF',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                    }} />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon size={18} />
+                    PNG
+                  </>
+                )}
+              </button>
+              <button
+                onClick={downloadAsWord}
+                style={{
+                  flex: 1,
+                  minWidth: '140px',
+                  padding: '14px',
+                  background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
                   border: 'none',
                   borderRadius: '10px',
                   color: '#FFFFFF',
@@ -444,7 +626,7 @@ export default function SignageGenerator() {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(79, 70, 229, 0.4)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(37, 99, 235, 0.4)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
@@ -452,14 +634,15 @@ export default function SignageGenerator() {
                 }}
               >
                 <FileText size={18} />
-                Descargar PDF
+                Word
               </button>
               <button
-                onClick={downloadAsImage}
+                onClick={handlePrint}
                 style={{
                   flex: 1,
+                  minWidth: '140px',
                   padding: '14px',
-                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                  background: 'linear-gradient(135deg, #10B981, #059669)',
                   border: 'none',
                   borderRadius: '10px',
                   color: '#FFFFFF',
@@ -474,15 +657,15 @@ export default function SignageGenerator() {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(139, 92, 246, 0.4)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(16, 185, 129, 0.4)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <ImageIcon size={18} />
-                Descargar PNG
+                <Printer size={18} />
+                Imprimir
               </button>
             </div>
 
@@ -499,6 +682,7 @@ export default function SignageGenerator() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
