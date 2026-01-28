@@ -236,7 +236,7 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
           <span className="text-xs">Espacio</span>
         </button>
 
-        {/* Borrar */}
+        {/* Botón Borrar */}
         <button
           onClick={() => {
             setActiveDots(new Set());
@@ -246,6 +246,40 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
         >
           <Trash2 size={18} />
           <span className="text-xs">Borrar</span>
+        </button>
+
+        {/* Fila de Puntuación */}
+        <button
+          onClick={() => onInput('⠂')}
+          className={`
+            col-span-1 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
+            ${isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700" : "bg-white border-slate-200 hover:bg-slate-50"}
+          `}
+        >
+          <span className="text-lg">,</span>
+          <span className="text-xs">Coma</span>
+        </button>
+
+        <button
+          onClick={() => onInput('⠄')}
+          className={`
+            col-span-1 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
+            ${isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700" : "bg-white border-slate-200 hover:bg-slate-50"}
+          `}
+        >
+          <span className="text-lg">.</span>
+          <span className="text-xs">Punto</span>
+        </button>
+
+        <button
+          onClick={() => onInput('⠤')}
+          className={`
+            col-span-2 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
+            ${isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700" : "bg-white border-slate-200 hover:bg-slate-50"}
+          `}
+        >
+          <span className="text-lg">-</span>
+          <span className="text-xs">Guion</span>
         </button>
 
         {/* Botón Añadir (Full width) */}
