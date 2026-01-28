@@ -16,28 +16,7 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
   const [isUpperCase, setIsUpperCase] = useState(false);
   const [isNumberMode, setIsNumberMode] = useState(false);
 
-  const colors = {
-    dark: {
-      bg: '#0A0E27',
-      card: '#151937',
-      text: '#FFFFFF',
-      textSecondary: '#8B92B8',
-      border: '#252B4F',
-      primary: '#8B5CF6',
-      secondary: '#EC4899',
-    },
-    light: {
-      bg: '#F8F9FF',
-      card: '#FFFFFF',
-      text: '#1E293B',
-      textSecondary: '#64748B',
-      border: '#E2E8F0',
-      primary: '#8B5CF6',
-      secondary: '#EC4899',
-    }
-  };
-
-  const theme = isDark ? colors.dark : colors.light;
+  /* Lógica del componente */
 
   // Matriz de puntos Braille: [1,2,3] [4,5,6]
   const dots = [
@@ -121,11 +100,6 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
       if (/^[0-9]$/.test(key)) {
         const brailleNum = BRAILLE_ALPHABET[key];
         if (brailleNum) {
-          // Si el mapa ya incluye el prefijo (como en nuestro diccionario actual: '1': '⠼⠁'), úsalo
-          // Nota: BRAILLE_ALPHABET define '1' como '⠼⠁' ?
-          // Vamos a verificar si el diccionario tiene dígitos puros o con prefijo.
-          // El archivo braille-dictionary.ts muestra: '1': '⠼⠁'.
-          // Entonces ya incluye el prefijo.
           onInput(brailleNum);
         }
         return;
@@ -138,7 +112,6 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
 
         if (brailleChar) {
           // Si es mayúscula (detectado por e.key siendo mayúscula o Shift activo), agregar prefijo
-          // Ojo: e.key 'A' ya implica mayúscula.
           if (key === key.toUpperCase() && key !== key.toLowerCase()) {
             brailleChar = CAPITAL_INDICATOR + brailleChar;
           }
@@ -155,77 +128,46 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onInput, onDelete, onSpace]);
+  }, [onInput, onDelete, onSpace, isUpperCase, isNumberMode]);
+
+  /* Diseño visual "Premium" */
+  const containerClasses = isDark
+    ? "bg-slate-900/50 backdrop-blur-xl border-slate-800 text-white shadow-2xl shadow-indigo-500/10"
+    : "bg-white/80 backdrop-blur-xl border-slate-200 text-slate-800 shadow-xl";
+
+  const cardClasses = isDark
+    ? "bg-slate-800/50 border-slate-700/50"
+    : "bg-white border-slate-200";
+
+  const activeDotClass = "bg-gradient-to-br from-violet-500 to-fuchsia-500 border-transparent shadow-[0_0_15px_rgba(139,92,246,0.5)] scale-105";
+  const inactiveDotClass = isDark
+    ? "bg-slate-800 border-slate-600 text-slate-500 hover:border-slate-500 hover:bg-slate-750"
+    : "bg-slate-100 border-slate-300 text-slate-400 hover:border-slate-400 hover:bg-slate-50";
 
   return (
-    <div style={{
-      background: isDark
-        ? 'linear-gradient(135deg, #0A0E27 0%, #151937 100%)'
-        : 'linear-gradient(135deg, #F8F9FF 0%, #FFFFFF 100%)',
-      borderRadius: '16px',
-      padding: '24px',
-      border: `1px solid ${theme.border}`,
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        marginBottom: '16px'
-      }}>
-        <Keyboard size={22} color={theme.primary} />
-        <h3 style={{
-          fontSize: '18px',
-          fontWeight: 700,
-          color: theme.text,
-          textAlign: 'center',
-          margin: 0,
-        }}>
-          Teclado Braille Visual
+    <div className={`rounded-3xl p-6 border ${containerClasses} transition-all duration-300`}>
+      {/* Header */}
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <div className={`p-2 rounded-xl ${isDark ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-100 text-indigo-600"}`}>
+          <Keyboard size={24} />
+        </div>
+        <h3 className="text-lg font-bold tracking-tight">
+          Teclado Braille
         </h3>
       </div>
 
       {/* Matriz de puntos */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        marginBottom: '20px',
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '16px',
-          width: 'fit-content',
-        }}>
+      <div className="flex justify-center mb-8">
+        <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-black/5 border border-white/5">
           {dots.map(dot => (
             <button
               key={dot.id}
               onClick={() => toggleDot(dot.id)}
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                background: activeDots.has(dot.id)
-                  ? `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`
-                  : theme.card,
-                border: activeDots.has(dot.id)
-                  ? `3px solid ${theme.primary}`
-                  : `3px solid ${theme.border}`,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '14px',
-                fontWeight: 700,
-                color: activeDots.has(dot.id) ? '#FFFFFF' : theme.textSecondary,
-                gridColumn: dot.col + 1,
-                gridRow: dot.row + 1,
-                boxShadow: activeDots.has(dot.id) ? `0 4px 12px ${theme.primary}40` : 'none',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              className={`
+                w-16 h-16 rounded-full border-2 text-xl font-bold transition-all duration-200 flex items-center justify-center
+                ${activeDots.has(dot.id) ? activeDotClass : inactiveDotClass}
+              `}
+              style={{ gridColumn: dot.col + 1, gridRow: dot.row + 1 }}
             >
               {dot.id}
             </button>
@@ -234,158 +176,96 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
       </div>
 
       {/* Vista previa */}
-      <div style={{
-        background: theme.bg,
-        border: `2px solid ${theme.border}`,
-        borderRadius: '12px',
-        padding: '16px',
-        marginBottom: '16px',
-        textAlign: 'center',
-        minHeight: '60px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <span style={{
-          fontSize: '48px',
-          color: theme.text,
-          fontFamily: 'monospace',
-        }}>
-          {activeDots.size > 0 ? dotsToUnicode(activeDots) : '⠀'}
-        </span>
+      <div className={`
+        relative mb-6 rounded-2xl border-2 overflow-hidden
+        ${isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}
+      `}>
+        <div className="absolute inset-0 bg-grid-white/[0.02]" />
+        <div className="relative p-4 flex items-center justify-center min-h-[80px]">
+          <span className={`text-6xl font-mono transition-all duration-300 ${activeDots.size > 0 ? "scale-100 opacity-100" : "scale-90 opacity-50"}`}>
+            {activeDots.size > 0 ? dotsToUnicode(activeDots) : '⠀'}
+          </span>
+        </div>
       </div>
 
       {/* Botones de acción */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '12px',
-      }}>
+      <div className="grid grid-cols-4 gap-3">
+        {/* Toggle Mayúsculas */}
         <button
-          onClick={() => setIsUpperCase(!isUpperCase)}
-          style={{
-            padding: '12px',
-            background: isUpperCase
-              ? theme.primary
-              : theme.card,
-            border: `1px solid ${isUpperCase ? theme.primary : theme.border}`,
-            borderRadius: '8px',
-            color: isUpperCase ? '#FFFFFF' : theme.text,
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            boxShadow: isUpperCase ? `0 0 10px ${theme.primary}60` : 'none',
+          onClick={() => {
+            setIsUpperCase(!isUpperCase);
+            if (!isUpperCase) setIsNumberMode(false);
           }}
+          className={`
+            p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
+            ${isUpperCase
+              ? "bg-violet-600 border-violet-500 text-white shadow-lg shadow-violet-500/25 ring-2 ring-violet-500/20"
+              : activeDots.size > 0 ? "opacity-50 cursor-not-allowed " + cardClasses : cardClasses + " hover:bg-slate-700/50"}
+          `}
         >
-          <ArrowUp size={16} />
-          Mayús
+          <ArrowUp size={18} />
+          <span className="text-xs">Mayús</span>
         </button>
 
+        {/* Toggle Números */}
         <button
-          onClick={addBrailleChar}
-          disabled={activeDots.size === 0}
-          style={{
-            padding: '12px',
-            background: activeDots.size > 0
-              ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-              : theme.border,
-            border: 'none',
-            borderRadius: '8px',
-            color: '#FFFFFF',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: activeDots.size > 0 ? 'pointer' : 'not-allowed',
-            opacity: activeDots.size > 0 ? 1 : 0.5,
-            transition: 'all 0.2s',
+          onClick={() => {
+            setIsNumberMode(!isNumberMode);
+            if (!isNumberMode) setIsUpperCase(false);
           }}
-          onMouseOver={(e) => {
-            if (activeDots.size > 0) {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className={`
+            p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
+            ${isNumberMode
+              ? "bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-500/25 ring-2 ring-pink-500/20"
+              : activeDots.size > 0 ? "opacity-50 cursor-not-allowed " + cardClasses : cardClasses + " hover:bg-slate-700/50"}
+          `}
         >
-          ✓ Añadir
+          <Hash size={18} />
+          <span className="text-xs">123</span>
         </button>
 
+        {/* Espacio */}
         <button
           onClick={onSpace}
-          style={{
-            padding: '12px',
-            background: `linear-gradient(135deg, ${theme.primary} 0%, #4338CA 100%)`,
-            border: 'none',
-            borderRadius: '8px',
-            color: '#FFFFFF',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className={`
+            col-span-1 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
+            bg-slate-700 border-slate-600 text-white hover:bg-slate-600
+          `}
         >
-          ␣ Espacio
+          <span className="text-lg">␣</span>
+          <span className="text-xs">Espacio</span>
         </button>
 
+        {/* Borrar */}
         <button
           onClick={() => {
             setActiveDots(new Set());
             onDelete();
           }}
-          style={{
-            padding: '12px',
-            background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
-            border: 'none',
-            borderRadius: '8px',
-            color: '#FFFFFF',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className="p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20 hover:border-red-500/30"
         >
-          <Trash2 size={16} />
-          Borrar
+          <Trash2 size={18} />
+          <span className="text-xs">Borrar</span>
+        </button>
+
+        {/* Botón Añadir (Full width) */}
+        <button
+          onClick={addBrailleChar}
+          disabled={activeDots.size === 0}
+          className={`
+            col-span-4 p-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 shadow-lg
+            ${activeDots.size > 0
+              ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white transform hover:scale-[1.02] hover:shadow-emerald-500/20 active:scale-[0.98]"
+              : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700/50"}
+          `}
+        >
+          ✓ Insertar Carácter
         </button>
       </div>
 
-      {/* Instrucciones */}
-      <div style={{
-        marginTop: '16px',
-        padding: '12px',
-        background: theme.bg,
-        borderRadius: '8px',
-        border: `1px solid ${theme.border}`,
-      }}>
-        <p style={{
-          fontSize: '12px',
-          color: theme.textSecondary,
-          margin: 0,
-          textAlign: 'center',
-        }}>
-          💡 Selecciona los puntos (1-6) para formar un carácter Braille y presiona &quot;Añadir&quot;
-        </p>
+      {/* Footer Instrucciones */}
+      <div className={`mt-6 text-center text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+        <p>Usa tu teclado numérico (1-9) para entrada rápida</p>
       </div>
     </div>
   );
