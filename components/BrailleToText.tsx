@@ -609,7 +609,6 @@ export default function BrailleToText() {
                 maxWidth: '450px',
                 flexShrink: 0,
                 animation: 'slideDown 0.3s ease-out',
-                marginTop: '32px',
               }}>
                 <BrailleKeyboard
                   onInput={handleBrailleKeyInput}
