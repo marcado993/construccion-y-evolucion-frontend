@@ -71,6 +71,10 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
 
       onInput(prefix + brailleChar);
       setActiveDots(new Set());
+
+      // Reiniciar modos después de insertar
+      setIsUpperCase(false);
+      setIsNumberMode(false);
     }
   };
 
@@ -241,6 +245,9 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
           onClick={() => {
             setActiveDots(new Set());
             onDelete();
+            // Resetear modos al borrar
+            setIsUpperCase(false);
+            setIsNumberMode(false);
           }}
           className="p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20 hover:border-red-500/30"
         >
@@ -253,6 +260,8 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
           onClick={() => {
             onInput('⠂');
             setActiveDots(new Set());
+            setIsUpperCase(false);
+            setIsNumberMode(false);
           }}
           className={`
             col-span-1 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
@@ -267,6 +276,8 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
           onClick={() => {
             onInput('⠄');
             setActiveDots(new Set());
+            setIsUpperCase(false);
+            setIsNumberMode(false);
           }}
           className={`
             col-span-1 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
@@ -281,6 +292,8 @@ export default function BrailleKeyboard({ onInput, onSpace, onDelete, isDark = t
           onClick={() => {
             onInput('⠤');
             setActiveDots(new Set());
+            setIsUpperCase(false);
+            setIsNumberMode(false);
           }}
           className={`
             col-span-2 p-3 rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 border
